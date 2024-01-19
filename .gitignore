@@ -1,0 +1,5 @@
+__pycache__/
+data/__pycache__/
+handlers/__pycache__/
+hundlers_admin/__pycache__/
+venv/
