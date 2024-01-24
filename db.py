@@ -314,7 +314,6 @@ class Database:
             return True
 
         except Exception as e:
-            self.connection.rollback()
             print(e)
             return False
         finally:
@@ -471,18 +470,28 @@ class Database:
 
 
 
-#     def add_new_action_describtion(self, descriptions, lang = "en")-> int:
-#         with self.connection.cursor() as cursor:
-#             if(lang == "en"):
-#                 cursor.execute(f"""INSERT INTO menus(message, button_name) 
-#                 VALUES('{descriptions[0]}', '{descriptions[1]}');""")
-#             else:
-#                 cursor.execute(f"""INSERT INTO menus(message_{lang}, button_name_{lang}) 
-#                 VALUES('{descriptions[0]}', '{descriptions[1]}');""")
-#             self.connection.commit() 
-#             cursor.execute(f"""SELECT LAST_INSERT_ID();""")
-#             id = cursor.fetchall()
-#             return int(id[0]['LAST_INSERT_ID()'])         
+    def add_new_action_describtion(self, descriptions, lang = "en")-> int:
+        try:
+            self.connect()
+            with self.connection.cursor() as cursor:
+                if(lang == "en"):
+                    cursor.execute(f"""INSERT INTO menus(message, button_name) 
+                    VALUES('{descriptions[0]}', '{descriptions[1]}');""")
+                else:
+                    cursor.execute(f"""INSERT INTO menus(message_{lang}, button_name_{lang}) 
+                    VALUES('{descriptions[0]}', '{descriptions[1]}');""")
+                self.connection.commit()
+                cursor.execute(f"""SELECT LAST_INSERT_ID();""")
+                id = cursor.fetchone()
+                return id[0]
+        except Exception as e:
+            self.connection.rollback()
+            print(e)
+            return None
+        finally:
+            self.disconnect()
+
+  
 
 # #для упрощения заменить столбец на en
 #     def get_message(self, id, lang = "en"):

@@ -20,7 +20,10 @@ def get_button_name(action, lang):
                 num = 10
         case _:
                 num = 2
-    return menus[id - 1][num]
+    if(menus[id - 1][num]):
+           
+        return menus[id - 1][num]
+    return ""
 
 def get_action_msg(id, lang = "en"):
     num = 2

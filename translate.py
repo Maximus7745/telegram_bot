@@ -1,14 +1,12 @@
-# from googletrans import Translator
-
+import translators as ts
 
 def get_tranlate(text: str)-> str:
     try:
-        translator = Translator()
-        lang = translator.detect(text).lang
-        tranlate_text = translator.translate(text, src=lang, dest='ru')
-        return tranlate_text
+        text_translate = ts.translate_text(text, to_language="ru", str="google")
+        if(text_translate):
+            return text_translate
+        else:
+            return text
     except Exception as e:
         print(e)
-        return None
-
-
+        return text

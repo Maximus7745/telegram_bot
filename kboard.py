@@ -24,6 +24,7 @@ class NumbersCallbackFactory(CallbackData, prefix="users"):
 def createInlineKeyboardBuilder( actions : [str], lang: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for action in actions:
+
         if(action == "action66" or action != actions[len(actions) - 1]):
             builder.button(text = text.get_button_name(action, lang), callback_data=NumbersCallbackFactory(action="action", 
                                                                                                        value= int(action[6 : ])))
