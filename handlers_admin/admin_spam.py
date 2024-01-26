@@ -1,14 +1,11 @@
-from handlers.start import router
+
 from filters import IsAdminFilter 
-from aiogram import types
-from magic_filter import F
+from aiogram import types, Router, F
+
 from aiogram.enums import ParseMode
-from states import StatesReductBtn, StatesReductMsg, StateAddBtn, StatesAdmin, StatesReductForm, StatesCancelForm, StatesReductApplication, StatesAnswerQuestions
-from aiogram.types import FSInputFile
+from states import  StatesAdmin
 from bot import bot
 from aiogram.fsm.context import FSMContext
-from aiogram.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
 from aiogram.filters import Command, StateFilter
 import kboard_admin
@@ -20,7 +17,7 @@ from kboard import get_reply_markup
 
 
 
-
+router = Router()
 
 
 
@@ -80,7 +77,7 @@ async def send_spam_admin_hundler(message: types.message, state: FSMContext):
 
 #Добавить возможность выбирать пользователей при рассылке, но как??????
 @router.message(StatesAdmin.print_spam_users)
-async def send_spam_users_hundler(message: types.message, state: FSMContext):
+async def send_spam_users_handler(message: types.message, state: FSMContext):
     id_usrs = db.get_all_users_id()
     for id in id_usrs:
         await bot.send_message(id, message.text)

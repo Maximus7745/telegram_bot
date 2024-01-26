@@ -1,19 +1,13 @@
-from handlers.start import router
+
 from filters import IsAdminFilter 
-from aiogram import types
-from magic_filter import F
+from aiogram import types, Router, F
 from aiogram.enums import ParseMode
-from states import StatesReductBtn, StatesReductMsg, StateAddBtn, StatesAdmin, StatesReductForm, StatesCancelForm, StatesReductApplication, StatesAnswerQuestions
-from aiogram.types import FSInputFile
-from bot import bot
-from aiogram.fsm.context import FSMContext
-from aiogram.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
+
 
 from aiogram.filters import Command, StateFilter
 import kboard_admin
-from text import get_action_msg, get_text, get_text_for_all_lang, db
-
+from text import  db
+router = Router()
 
 @router.message(StateFilter(None), Command("yhtynhhrytnryh5e54gseae4fvfdsgw354egf4e"))
 async def add_admin(message: types.Message):

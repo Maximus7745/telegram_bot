@@ -1,15 +1,10 @@
-from handlers.start import router
 from filters import IsAdminFilter 
-from aiogram import types
-from magic_filter import F
+from aiogram import types, Router, F
 from aiogram.enums import ParseMode
-from states import StatesReductBtn, StatesReductMsg, StateAddBtn, StatesAdmin, StatesReductForm, StatesCancelForm, StatesReductApplication, StatesAnswerQuestions
 from aiogram.types import FSInputFile
 from bot import bot
 from aiogram.fsm.context import FSMContext
-from aiogram.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
-
+from states import StatesCancelForm, StatesReductApplication
 from aiogram.filters import Command, StateFilter
 import kboard_admin
 from text import db
@@ -19,7 +14,7 @@ from kboard import get_reply_markup
 
 from text import get_text
 
-
+router = Router()
 
 
 
@@ -33,7 +28,10 @@ from text import get_text
 
 @router.callback_query(IsAdminFilter(), 
                        kboard_admin.AdminCallbackFactory.filter(F.action == "forms"))
-async def check_forms_list_hundler(callback: types.CallbackQuery):
+async def check_forms_list_handler(callback: types.CallbackQuery, 
+                             callback_data: kboard_admin.AdminCallbackFactory):
+    if(callback_data.value != 0):
+        db.update_elem_by_id("is_open", False, callback_data.value)
     forms = db.get_new_forms()
     markup = get_markup_forms(forms)
 
@@ -44,28 +42,33 @@ async def check_forms_list_hundler(callback: types.CallbackQuery):
 
 @router.callback_query(IsAdminFilter(), 
                        kboard_admin.AdminCallbackFactory.filter(F.action == "check_form"))
-async def check_form_hundler(callback: types.CallbackQuery, 
+async def check_form_handler(callback: types.CallbackQuery, 
                              callback_data: kboard_admin.AdminCallbackFactory): 
-    try:
-        await callback.message.answer_document(FSInputFile(elems[9]), allow_sending_without_reply=True)
-        await callback.message.answer_document(FSInputFile(elems[10]), allow_sending_without_reply=True)
-        await callback.message.answer_document(FSInputFile(elems[12]), allow_sending_without_reply=True)
-        await callback.message.answer_document(FSInputFile(elems[13]), allow_sending_without_reply=True)
-    except:
-        pass
-    finally:
-
+    if(not bool(db.get_elem_by_id("is_open",callback_data.value))):
         form_id = callback_data.value
         elems = db.get_all_elem_by_form_id(form_id)
-        markup = get_markup_reduct_forms(form_id)
-        text = get_text_reduct_form(elems)
+        db.update_elem_by_id("is_open", True, callback_data.value)
+        await callback.message.delete()
+        try:
+            await callback.message.answer_document(FSInputFile(elems[9]), allow_sending_without_reply=True)
+            await callback.message.answer_document(FSInputFile(elems[10]), allow_sending_without_reply=True)
+            await callback.message.answer_document(FSInputFile(elems[11]), allow_sending_without_reply=True)
+            await callback.message.answer_document(FSInputFile(elems[12]), allow_sending_without_reply=True)
+            await callback.message.answer_document(FSInputFile(elems[13]), allow_sending_without_reply=True)
+        except Exception as e:
+            print(e)
+        finally:
 
-        await callback.message.edit_text(text,
-        reply_markup=markup, parse_mode=ParseMode.HTML)
+
+            markup = get_markup_reduct_forms(form_id)
+            text = get_text_reduct_form(elems)
+
+            await callback.message.answer(text,
+            reply_markup=markup, parse_mode=ParseMode.HTML)
 
 @router.callback_query(IsAdminFilter(), 
                        kboard_admin.AdminCallbackFactory.filter(F.action == "reduct_mistakes"))
-async def reduct_mistakes_hundler(callback: types.CallbackQuery, 
+async def reduct_mistakes_handler(callback: types.CallbackQuery, 
                              callback_data: kboard_admin.AdminCallbackFactory, state: FSMContext): 
     await state.set_state(StatesReductApplication.writing_text)
     await state.update_data(column=callback_data.string)
@@ -80,21 +83,22 @@ async def reduct_mistakes_hundler(callback: types.CallbackQuery,
 async def cancel_reduct_mistakes(message: types.Message, state: FSMContext):
     data = await state.get_data()
     form_id = data["form_id"]
+
     await state.clear()
 
 
     await message.answer("""Отмена прошла успешно""", reply_markup =types.ReplyKeyboardRemove(), parse_mode=ParseMode.HTML)
     
-
+    elems = db.get_all_elem_by_form_id(form_id)
     try:
         await message.answer_document(FSInputFile(elems[9]), allow_sending_without_reply=True)
         await message.answer_document(FSInputFile(elems[10]), allow_sending_without_reply=True)
+        await message.answer_document(FSInputFile(elems[11]), allow_sending_without_reply=True)
         await message.answer_document(FSInputFile(elems[12]), allow_sending_without_reply=True)
         await message.answer_document(FSInputFile(elems[13]), allow_sending_without_reply=True)
     except:
         pass
     finally:
-        elems = db.get_all_elem_by_form_id(form_id)
         markup = get_markup_reduct_forms(form_id)
         text = get_text_reduct_form(elems)
  
@@ -103,7 +107,7 @@ async def cancel_reduct_mistakes(message: types.Message, state: FSMContext):
 
 
 @router.message(StatesReductApplication.writing_text)
-async def reduct_elem_hundler(message: types.message, state: FSMContext):
+async def reduct_elem_handler(message: types.message, state: FSMContext):
     data = await state.get_data()
     column = data["column"]
     form_id = data["form_id"]
@@ -113,16 +117,18 @@ async def reduct_elem_hundler(message: types.message, state: FSMContext):
     else:
         await message.answer("""Не удалось сохранить изменения""", reply_markup=types.ReplyKeyboardRemove(), parse_mode=ParseMode.HTML)
     await state.clear()
+    elems = db.get_all_elem_by_form_id(form_id)
     try:
         await message.answer_document(FSInputFile(elems[9]), allow_sending_without_reply=True)
         await message.answer_document(FSInputFile(elems[10]), allow_sending_without_reply=True)
+        await message.answer_document(FSInputFile(elems[11]), allow_sending_without_reply=True)
         await message.answer_document(FSInputFile(elems[12]), allow_sending_without_reply=True)
         await message.answer_document(FSInputFile(elems[13]), allow_sending_without_reply=True)
     except:
         pass
     finally:
 
-        elems = db.get_all_elem_by_form_id(form_id)
+        
         markup = get_markup_reduct_forms(form_id)
         text = get_text_reduct_form(elems)
 
@@ -134,7 +140,7 @@ async def reduct_elem_hundler(message: types.message, state: FSMContext):
 
 @router.callback_query(IsAdminFilter(), 
                        kboard_admin.AdminCallbackFactory.filter(F.action == "return_form"))
-async def return_form_hundler(callback: types.CallbackQuery, 
+async def return_form_handler(callback: types.CallbackQuery, 
                              callback_data: kboard_admin.AdminCallbackFactory, state: FSMContext):
     await state.set_state(StatesCancelForm.writing_casuse)
     await state.update_data(form_id=callback_data.value)
@@ -143,7 +149,7 @@ async def return_form_hundler(callback: types.CallbackQuery,
     await callback.message.answer("""Напишите причину отклонения формы.""", reply_markup=markup, parse_mode=ParseMode.HTML)    
     
 @router.message(StatesCancelForm.writing_casuse)
-async def write_casuse_hundler(message: types.message, state: FSMContext):
+async def write_casuse_handler(message: types.message, state: FSMContext):
     data = await state.get_data()
     form_id = data["form_id"]
     if(db.add_form_comment(form_id, str(message.text)) and db.update_elem_by_id("is_reviewed", True, form_id)):
@@ -152,9 +158,8 @@ async def write_casuse_hundler(message: types.message, state: FSMContext):
         await bot.send_message(user_id, get_text("text33", lang=user_lang) + message.text)
         await message.answer("""Форма успешно отклонена.""", reply_markup=types.ReplyKeyboardRemove(), parse_mode=ParseMode.HTML)
     await state.clear()
+    db.update_elem_by_id("is_open", False, form_id)
 
-
-    #Это тоже надо как-то оптимизировать
     forms = db.get_new_forms()
     markup = get_markup_forms(forms)
 
@@ -170,12 +175,14 @@ async def write_casuse_hundler(message: types.message, state: FSMContext):
 async def send_application(callback: types.CallbackQuery, 
                              callback_data: kboard_admin.AdminCallbackFactory): 
     form_id = callback_data.value
-    db.set_form_status_reviewed(form_id)
+    db.update_elem_by_id("is_reviewed", True, form_id)
+    db.update_elem_by_id("is_accepted", True, form_id)
     user_id = db.get_elem_by_id("user_id", form_id)
     user_lang = db.get_lang(user_id)
+    db.update_elem_by_id("is_open", False, form_id)
     await bot.send_message(user_id, get_text("text34", lang=user_lang))
     #Тут должна быть ещё отправка в crm
-    await check_forms_list_hundler(callback)
+    await check_forms_list_handler(callback, callback_data)
 
 
 
@@ -206,8 +213,7 @@ def get_markup_reduct_forms(form_id):
     actions.append("forms")
     strs = ["send_form", "return_form", "firstname", "lastname", "country", "birth_date",
                "mail", "phone", "before_study_country", "comments", "forms"]
-    values = [form_id] * (len(texts) - 1)
-    values.append(0)
+    values = [form_id] * len(texts)
     return kboard_admin.create_inline_keyboard_builder(texts, actions, values, strs)
 
 

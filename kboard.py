@@ -8,8 +8,10 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 def createReplyKeyboardBuilder(lines : [str]) -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
     for line in lines:
-        builder.add(KeyboardButton(text=line))
-    return builder.as_markup()
+        builder.row(KeyboardButton(text=line))
+    markup = builder.as_markup()
+    markup.one_time_keyboard = True
+    return markup
 
 
 
@@ -129,55 +131,23 @@ def get_markup_reduct_forms_users(lang, form_id):
     return create_inline_keyboard_builder(texts, actions, values, strs)
 
 
-# from typing import Optional
-# from aiogram.filters.callback_data import CallbackData
-
-# from aiogram.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
-# from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
-# from aiogram.filters import Command
-# #from data.text import action_dict, list_dict
-
-# from bot import db
-# from aiogram.enums import ParseMode
-# class NumbersCallbackFactory(CallbackData, prefix="d332da"):
-#     action: str
-#     value: Optional[int] = None
-
-# def createInlineKeyboardBuilder(action, lang) -> InlineKeyboardMarkup:
-#     builder = InlineKeyboardBuilder()
-#     lines = db.get_buttons_list(action)
-#     for line in lines:
-#         if(action == "action1" or line != lines[len(lines) - 1]):
-#             id = line[6 : ]
-#             builder.button(text=db.get_button_name(id, lang), callback_data=line, parse_mode=ParseMode.HTML)
-#         else:
-#             builder.button(text=db.get_text("text28", lang=lang), callback_data=line)
-#     builder.adjust(1)
-
-    
-#     return builder.as_markup()
 
 
+def create_replay_markup():
+    langs = ["en", "ru", "fr", "ar", "ch"]
+    menu_dict = dict()
+    for parent_action in text.buttons_list["action6"][ : -1]:
+        menu_dict[int(parent_action[6 : ])] = dict()
+        for lang in langs:
+            buttton_names = list()
+            for action in text.buttons_list[parent_action]:
+                if(action != text.buttons_list[parent_action][len(text.buttons_list[parent_action]) - 1]):
+                    buttton_names.append(text.get_button_name(action, lang))
+                else:
+                    buttton_names.append(text.get_text("text29", lang))
+        
+            menu_dict[int(parent_action[6 : ])][lang] = createReplyKeyboardBuilder(buttton_names)
+    return menu_dict
 
+markups = create_replay_markup()
 
-# # def createInlineKeyboardBuilder( lines : [str], act: str=None) -> InlineKeyboardMarkup:
-# #     builder = InlineKeyboardBuilder()
-# #     idx = 0
-# #     for line in lines:
-# #         builder.button(text=line, callback_data=NumbersCallbackFactory(action=action_dict[line]))
-# #         idx += 1
-# #     builder.adjust(1)
-# #     return builder.as_markup()
-
-
-
-# cancel_kboard =  createReplyKeyboardBuilder(["Отмена"])
-
-# # def setMenues():
-# #     for item in list_dict:
-# #         menu_dict[item] = createInlineKeyboardBuilder(list_dict[item])
-
-# # def getInlineKeyboardBuilder(name):
-# #     return menu_dict[name]
-
-# # setMenues()

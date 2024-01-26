@@ -1,28 +1,22 @@
-from handlers.start import router
+
 from filters import IsAdminFilter 
-from aiogram import types
-from magic_filter import F
+from aiogram import types, Router, F
+
 from aiogram.enums import ParseMode
-from states import StatesReductBtn, StatesReductMsg, StateAddBtn, StatesAdmin, StatesReductForm, StatesCancelForm, StatesReductApplication, StatesAnswerQuestions
-from aiogram.types import FSInputFile
-from bot import bot
-from aiogram.fsm.context import FSMContext
-from aiogram.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
+
 
 from aiogram.filters import Command, StateFilter
 import kboard_admin
 from text import db
 
 
-from kboard import get_reply_markup
 
-
+router = Router()
 
 
 @router.callback_query(IsAdminFilter(), 
                        kboard_admin.AdminCallbackFactory.filter(F.action == "rights_distribution"))
-async def change_rights_distributionss_hundler(callback: types.CallbackQuery):
+async def change_rights_distributionss_handler(callback: types.CallbackQuery):
     my_id = callback.from_user.id
     id_adms = db.get_all_admins_id()
 
@@ -34,7 +28,7 @@ async def change_rights_distributionss_hundler(callback: types.CallbackQuery):
 
 @router.callback_query(IsAdminFilter(), 
                        kboard_admin.AdminCallbackFactory.filter(F.action == "del_adm"))
-async def del_admin_hundler(callback: types.CallbackQuery, 
+async def del_admin_handler(callback: types.CallbackQuery, 
                              callback_data: kboard_admin.AdminCallbackFactory): 
     await callback.message.delete()
     if(db.del_admin_by_id(callback_data.value)):

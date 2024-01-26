@@ -1,15 +1,10 @@
-#from handlers.start import router
 from filters import IsAdminFilter 
-from aiogram import types, Router
-from magic_filter import F
+from aiogram import types, Router, F
+
 from aiogram.enums import ParseMode
-from states import StatesReductBtn, StatesReductMsg, StateAddBtn, StatesAdmin, StatesReductForm, StatesCancelForm, StatesReductApplication, StatesAnswerQuestions
-from aiogram.types import FSInputFile
+from states import StatesReductBtn, StatesReductMsg, StateAddBtn, StatesReductForm
 from bot import bot
 from aiogram.fsm.context import FSMContext
-from aiogram.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
-
 from aiogram.filters import Command, StateFilter
 import kboard_admin
 from text import db, get_text, get_action_msg, get_button_name
@@ -17,6 +12,7 @@ import text
 
 from kboard import get_reply_markup
 import kboard
+
 router = Router()
 
 
@@ -26,25 +22,25 @@ router = Router()
 
 @router.callback_query(IsAdminFilter(), 
                        kboard_admin.AdminCallbackFactory.filter(F.action == "reduct"))
-async def start_reduct_bot_hundler(callback: types.CallbackQuery):
+async def start_reduct_bot_handler(callback: types.CallbackQuery):
     markup = kboard_admin.start_reduct_bot_markup
     await callback.message.edit_text("""Раздел редактирования бота делится на два подраздела. Редактирование меню включает в себя редактировние стартового меню, которое видят пользователи при взаимодействии с ботом, а также изменение и добавление частозадаваемых вопросов. Редактировние формы же предполагает непосредственно изменение текста при заполнении пользователями формы для обучения.""", 
     reply_markup= markup, parse_mode=ParseMode.HTML)
 
 @router.callback_query(IsAdminFilter(), 
                        kboard_admin.AdminCallbackFactory.filter(F.action == "select_lang"))
-async def check_list_lang_reduct_hundler(callback: types.CallbackQuery):
+async def check_list_lang_reduct_handler(callback: types.CallbackQuery):
     await callback.message.edit_text("Select your language", 
                                      reply_markup= kboard_admin.lang_marup, parse_mode=ParseMode.HTML)
 
 @router.callback_query(IsAdminFilter(), 
                        kboard_admin.AdminCallbackFactory.filter(F.action == "lang"))
-async def select_lang_reduct_hundler(callback: types.CallbackQuery, 
+async def select_lang_reduct_handler(callback: types.CallbackQuery, 
                              callback_data: kboard_admin.AdminCallbackFactory):
     lang = callback_data.string
     user_id = callback.from_user.id
     db.update_lang(user_id, lang)
-    await start_reduct_bot_hundler(callback)
+    await start_reduct_bot_handler(callback)
 @router.callback_query(IsAdminFilter(), 
                        kboard_admin.AdminCallbackFactory.filter(F.action == "refrash_tables"))
 async def refrash_table(callback: types.CallbackQuery):
@@ -221,32 +217,11 @@ async def new_name_btn_handler(message: types.Message, state: FSMContext):
     markup = kboard_admin.get_action_menus(parent_action_id,lang)
     await message.answer(f"""Текст сообщения:{get_action_msg(parent_action_id - 1, lang)} \n Текст кнопки: {get_button_name("action" + str(parent_action_id), lang)}"""
                                      , reply_markup= markup)
-# надо доделать!!!!!
-# @router.callback_query(IsAdminFilter(), F.data == "action15")
-# async def handle_reduct(callback: types.CallbackQuery):
-#     user_id = callback.from_user.id
-#     lang = db.get_lang(user_id)  
-#     action = "action15"
-#     id = 15
-#     list_advices = db.get_advices_list()
-#     texts = ["Редактировать текст", "Редактировать кнопку", "Удалить кнопку", "Добавить\nновый совет"]
-#     buttons_list = db.get_buttons_list(action)
-#     for btn in buttons_list:
-#         if(btn != buttons_list[len(buttons_list) - 1]):
-#             texts.append(db.get_button_name(btn[6 : ], lang))
-#     texts.append("Назад")
-#     actions = [f"8dei_reduct_msg_{action}", f"8dei_reduct_btn_{action}",f"8dei_del_btn_{action}", f"8dei_add_btn_{action}"]
-#     actions += buttons_list
-#     markup = kboard.create_inline_keyboard_builder_for_admins(texts, actions) 
-#     await callback.message.edit_text(f"""Текст сообщения:{db.get_message(id, lang)} \n Текст кнопки: {db.get_button_name(id, lang)}""", reply_markup= markup, parse_mode=ParseMode.HTML)
 
 
-#тут ещё нужно добавить обработки особых случаев, по типу полезных советов и добавления нивых советов
-#main functions for actions
-#Потом оптимизировать со следующим
 @router.callback_query(IsAdminFilter(), 
                     kboard_admin.AdminCallbackFactory.filter(F.action == "action"))
-async def reduct_action_hundler(callback: types.CallbackQuery, 
+async def reduct_action_handler(callback: types.CallbackQuery, 
                              callback_data: kboard_admin.AdminCallbackFactory):
     user_id = callback.from_user.id
     lang = db.get_lang(user_id)  
@@ -256,13 +231,10 @@ async def reduct_action_hundler(callback: types.CallbackQuery,
                                      , reply_markup= markup)
 
 
-#плюс не забыть добавить отмену при вводе текста
-#да и для формы тоже
-
 #редактирование формы
 @router.callback_query(IsAdminFilter(), 
                     kboard_admin.AdminCallbackFactory.filter(F.action == "reduct_form"))
-async def start_reduct_form_hundler(callback: types.CallbackQuery):
+async def start_reduct_form_handler(callback: types.CallbackQuery):
 
     markup = kboard_admin.reduct_form_markup
     await callback.message.edit_text("""В данной форме можно редактировать только текст, который появляется при заполнении формы пользователем.""", reply_markup= markup, parse_mode=ParseMode.HTML)
@@ -270,7 +242,7 @@ async def start_reduct_form_hundler(callback: types.CallbackQuery):
 
 @router.callback_query(IsAdminFilter(), 
                     kboard_admin.AdminCallbackFactory.filter(F.action == "reduct_form_text"))
-async def reduct_form_text_hundler(callback: types.CallbackQuery, 
+async def reduct_form_text_handler(callback: types.CallbackQuery, 
                              callback_data: kboard_admin.AdminCallbackFactory, state: FSMContext):
     markup = get_reply_markup("cancel", "ru")
     await callback.message.delete()
@@ -280,7 +252,7 @@ async def reduct_form_text_hundler(callback: types.CallbackQuery,
 
 @router.callback_query(IsAdminFilter(), 
                     kboard_admin.AdminCallbackFactory.filter(F.action == "text"))
-async def select_form_text_hundler(callback: types.CallbackQuery, 
+async def select_form_text_handler(callback: types.CallbackQuery, 
                              callback_data: kboard_admin.AdminCallbackFactory):
     user_id = callback.from_user.id
     lang = db.get_lang(user_id) 
@@ -304,7 +276,7 @@ async def cancel_reduct_form(message: types.Message, state: FSMContext):
 
 
 @router.message(StatesReductForm.writing_new_text)
-async def save_reduct_form_text_hundler(message: types.Message, state: FSMContext):
+async def save_reduct_form_text_handler(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     lang = db.get_lang(user_id) 
     data = await state.get_data()

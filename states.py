@@ -10,6 +10,7 @@ class StatesForm(StatesGroup):
     writing_old_counties_educations = State()
     loading_passport = State()
     loading_passport_translation = State()
+    loading_photo = State()
     loading_visa_form = State()
     loading_bank_statement = State()
     select_person_access = State()
@@ -60,10 +61,12 @@ class StatesReductOldForm(StatesGroup):
     writing_old_counties_educations = State()
     loading_passport = State()
     loading_passport_translation = State()
+    loading_photo = State()
     loading_visa_form = State()
     loading_bank_statement = State()
     select_person_access = State()
     loading_comments = State()
     loading_photo = State()
 
-
+class StatesFAQ(StatesGroup):
+    select_question = State()

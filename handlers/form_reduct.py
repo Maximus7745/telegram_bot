@@ -2,21 +2,20 @@ from states import StatesReductOldForm
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram import F
-from handlers.start import router
 from kboard import NumbersCallbackFactory
 from aiogram.types import Message
-from aiogram import types, F, Router
-from email_validate import validate
+from aiogram import types, Router
+from validate_email import validate_email
 import kboard
 from aiogram.enums import ParseMode
 import re
 from aiogram.types import FSInputFile
 import filters
 from datetime import datetime
-import numpy as np
-import pandas as pd
 from kboard import NumbersCallbackFactory
 from text import get_action_msg, get_text, get_text_for_all_lang, db
+router = Router()
+
 
 @router.callback_query(NumbersCallbackFactory.filter(F.action == "red_form_elem"))
 async def start_red_form_elem_form(callback: types.CallbackQuery, 
@@ -77,7 +76,6 @@ async def start_red_form_elem_form(callback: types.CallbackQuery,
     reply_markup=kboard.get_reply_markup("cancel", lang))
     
 
-#можно потом разобраться с дропом голосовых и файлов в неподходящий момент или просто в try except обернуть, либо в фильтрах текст прописать
 @router.message(StatesReductOldForm.writing_firstname, F.text.lower().in_(get_text_for_all_lang("text29")))
 @router.message(StatesReductOldForm.writing_lastname, F.text.lower().in_(get_text_for_all_lang("text29")))
 @router.message(StatesReductOldForm.writing_country, F.text.lower().in_(get_text_for_all_lang("text29")))
@@ -87,6 +85,7 @@ async def start_red_form_elem_form(callback: types.CallbackQuery,
 @router.message(StatesReductOldForm.writing_old_counties_educations, F.text.lower().in_(get_text_for_all_lang("text29")))
 @router.message(StatesReductOldForm.loading_passport, F.text.lower().in_(get_text_for_all_lang("text29")))
 @router.message(StatesReductOldForm.loading_passport_translation, F.text.lower().in_(get_text_for_all_lang("text29")))
+@router.message(StatesReductOldForm.loading_photo, F.text.lower().in_(get_text_for_all_lang("text29")))
 @router.message(StatesReductOldForm.loading_visa_form, F.text.lower().in_(get_text_for_all_lang("text29")))
 @router.message(StatesReductOldForm.loading_bank_statement, F.text.lower().in_(get_text_for_all_lang("text29")))
 @router.message(StatesReductOldForm.select_person_access, F.text.lower().in_(get_text_for_all_lang("text29")))
@@ -112,10 +111,9 @@ async def cancel_reduct_form(message: Message, state: FSMContext):
 
 
 #writing_firstname
-from aiogram.enums import MessageEntityType
 @router.message(
-    StatesReductOldForm.writing_firstname, 
-    lambda m: all((ch.isalpha() or ch == " " or ch == "-") for ch in m.text) and len(m.text) < 50 
+    StatesReductOldForm.writing_firstname,  F.text,
+    lambda m: re.fullmatch(r'^[a-zA-Zа-яА-Я\s\-\'.]+$', m.text) and len(m.text) < 50  
 )
 async def reduct_firstname_written(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -152,8 +150,8 @@ async def load_start_red_menu(message: Message, state: FSMContext):
 
 #writing_lastname
 @router.message(
-    StatesReductOldForm.writing_lastname, 
-    lambda m: all((ch.isalpha() or ch in ["'", ".", " ", "-"]) for ch in m.text) and len(m.text) < 50 
+    StatesReductOldForm.writing_lastname,  F.text,
+    lambda m: re.fullmatch(r'^[a-zA-Zа-яА-Я\s\-\'.]+$', m.text) and len(m.text) < 50 
 )
 async def reduct_lastname_written(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -175,8 +173,8 @@ async def reduct_firstname_written_incorrectly(message: Message):
 
 #writing_country
 @router.message(
-    StatesReductOldForm.writing_country, 
-    lambda m: all((ch.isalpha() or ch in ["'", ".", " ", "-"]) for ch in m.text) and len(m.text) < 50 
+    StatesReductOldForm.writing_country,  F.text,
+    lambda m: re.fullmatch(r'^[a-zA-Zа-яА-Я\s\-\'.]+$', m.text) and len(m.text) < 50 
 )
 async def reduct_country_written(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -200,7 +198,7 @@ async def reduct_country_written_incorrectly(message: Message):
 #подумать как можно улучшить проверку даты
 #writing_birth_date
 @router.message(
-    StatesReductOldForm.writing_birth_date, 
+    StatesReductOldForm.writing_birth_date,  F.text,
     lambda m: re.fullmatch("[0-3][0-9]\.[0-1][0-9]\.[1-2][0-9][0-9][0-9]",m.text)
     #datetime.strptime(date_string, "%d.%m.%Y")
 )
@@ -226,8 +224,8 @@ async def reduct_birth_date_written_incorrectly(message: Message):
 
 #writing_mail
 @router.message(
-    StatesReductOldForm.writing_mail, 
-    lambda m: validate(m.text)
+    StatesReductOldForm.writing_mail,  F.text,
+    lambda m: validate_email(email_address=m.text)
 )
 async def reduct_mail_written(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -250,7 +248,7 @@ async def reduct_mail_written_incorrectly(message: Message):
 
 #writing_phone
 @router.message(
-    StatesReductOldForm.writing_phone, 
+    StatesReductOldForm.writing_phone, F.text,
     lambda m: ((m.text[0] == "+" and len(m.text) > 1) or m.text[0].isdigit()) and all(x.isdigit() for x in m.text[1 : ]) and len(m.text) < 33 # maybe add check ( ) or space or -
 )
 async def reduct_phone_written(message: Message, state: FSMContext):
@@ -274,8 +272,8 @@ async def reduct_phone_written_incorrectly(message: Message):
 
 #writing_old_counties_educations
 @router.message(
-    StatesReductOldForm.writing_old_counties_educations, 
-    lambda m: all((ch.isalpha() or ch in ["'", ".", " ", "-"]) for ch in m.text) and len(m.text) < 50 
+    StatesReductOldForm.writing_old_counties_educations, F.text,
+    lambda m: re.fullmatch(r'^[a-zA-Zа-яА-Я\s\-\'.]+$', m.text) and len(m.text) < 50 
 )
 async def reduct_old_counties_educations_written(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -446,7 +444,7 @@ async def reduct_bank_statement_written_incorrectly(message: Message):
 
 #loading_comments
 @router.message(
-    StatesReductOldForm.loading_comments
+    StatesReductOldForm.loading_comments, F.text
 )
 async def reduct_comments_written(message: Message, state: FSMContext):
     data = await state.get_data()

@@ -34,6 +34,6 @@ class IsJpeg(BaseFilter):
         file_id = message.document.file_id
         file_info = await message.bot.get_file(file_id)
         file_path = file_info.file_path
-        if(file_path.split(".")[len(file_path.split(".")) - 1] == "jpeg")and file_info.file_size // 1024 < 15000:
+        if(file_path.split(".")[len(file_path.split(".")) - 1] == "jpg")and file_info.file_size // 1024 < 15000:
             return True
         return False

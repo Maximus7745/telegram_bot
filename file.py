@@ -1,16 +1,26 @@
 from aiogram.types import FSInputFile
+import os
 
-def get_file(key: str)-> FSInputFile:
+def get_files(key: str)-> list[FSInputFile]:
     return files[key]
 
 
 def load_files()-> None:
-    files["photo1705054721"] = FSInputFile('data/firtst_steps_in_ekb/ru/photo1705054721.jpeg')
-    files["photo1705054721_1"] = FSInputFile('data/firtst_steps_in_ekb/ru/photo1705054721 (1).jpeg')
-    files["first_steps_page1"] = FSInputFile('data/firtst_steps_in_ekb/en/first_steps_page1.jpeg')
-    files["first_steps_page2"] = FSInputFile('data/firtst_steps_in_ekb/en/first_steps_page2.jpeg')
-    files["Visa_application_form"] = FSInputFile('data/visa_docs/Visa_application_form.pdf')
-    files["Visa_application_form_example"] = FSInputFile('data/visa_docs/Visa_application_form_example.pdf')
+
+    files["first_steps_en"] = get_inputfile('data/firtst_steps_in_ekb/en/')
+    files["first_steps_ru"] = get_inputfile('data/firtst_steps_in_ekb/ru/')
+    files["visa_application_form"] = get_inputfile('data/visa_docs/')
+
+
+def get_inputfile(path: str)-> list[FSInputFile]:
+    files_list = list()
+    list_dirs = os.listdir(path)
+    for file in list_dirs:
+        files_list.append(FSInputFile(path + file))
+    
+    return files_list
+
+
 
 files = dict()
 load_files()

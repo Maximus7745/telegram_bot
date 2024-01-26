@@ -11,8 +11,8 @@ class Database:
             self.password = password
             self.database = database
             self.connection = None
-            self.try_create_tables()
-            self.try_load_start_data()
+            if(self.try_create_tables()):
+                self.try_load_start_data()
 
         except Exception as e:
             print(e)
@@ -32,7 +32,7 @@ class Database:
         if self.connection:
             self.connection.close()
 
-    def try_create_tables(self)-> None:
+    def try_create_tables(self)-> bool:
         try:
             self.connect()
             with self.connection.cursor() as cursor:
@@ -58,9 +58,10 @@ class Database:
                 cursor.execute("""CREATE TABLE IF NOT EXISTS telegram_questions(id INT AUTO_INCREMENT PRIMARY KEY, user_id BIGINT,
                             admin_id BIGINT, question TEXT, answer TEXT, question_datetime DATETIME, answer_datetime DATETIME);""")
                 self.connection.commit()
+                return True
         except Exception as e:
             print(e)
-            print("Failed to create tables")
+            return False
         finally:
             self.disconnect()
 
@@ -160,7 +161,6 @@ class Database:
                 result = cursor.fetchall()
         except Exception as e:
             print(e)
-            print(f"Failed load data to {table_name}")
         finally:
             self.disconnect()
             if len(result) == 0:
@@ -168,8 +168,6 @@ class Database:
             return False
 
     #forms_comment
-#"""CREATE TABLE IF NOT EXISTS forms_comment(id INT AUTO_INCREMENT PRIMARY KEY, form_id BIGINT,
-#                           admin_comment TEXT, comment_datetime DATETIME);"""
     def add_form_comment(self, form_id: int, admin_comment: str)-> bool:
         try:
             comment_datetime = datetime.datetime.now()
@@ -224,9 +222,7 @@ class Database:
                         cursor.execute(f"""UPDATE buttons_lists SET {key} = %s WHERE id = %s;""", (data[key][i - 1], i))
                 self.connection.commit()
         except Exception as e:
-            self.connection.rollback()
             print(e)
-            print("Failed to load data into buttons_lists")
         finally:
             self.disconnect()
 
@@ -360,6 +356,7 @@ class Database:
             
         except Exception as e:
             print(e)
+            return dict()
         finally:
             self.disconnect()  
         buttons_list = dict()
@@ -371,24 +368,7 @@ class Database:
         return buttons_list
 
 
-    # def get_text(self, key, lang = "en"):
-    #     id = 1
-    #     match lang:
-    #         case "ru":
-    #             id = 2
-    #         case "fr":
-    #             id = 3
-    #         case "ar":
-    #             id = 4
-    #         case "ch":
-    #             id = 5
-    #         case _:
-    #             id = 1
 
-    #     with self.connection.cursor() as cursor:
-    #         cursor.execute(f"""SELECT {key} FROM text WHERE id='{id}';""")
-    #         message = cursor.fetchall()
-    #         return str(list(message[0].values())[0])
 
     def get_text_for_all_lang(self, key : str)-> list[str]:
         try:
@@ -404,12 +384,7 @@ class Database:
         finally:
             self.disconnect()  
 
-
-    # def get_advices_list(self):
-    #     with self.connection.cursor() as cursor:
-    #         cursor.execute(f"""SHOW COLUMNS FROM text;""")
-    #         message = cursor.fetchall()
-    #         return list(filter(lambda x: "advice" in x ,list(map(lambda x: x["Field"],message))))          
+     
 
     def update_text_table(self, key: str, text: str, lang: str = "en")-> bool:
         try:
@@ -449,9 +424,7 @@ class Database:
 
                 self.connection.commit()
         except Exception as e:
-            self.connection.rollback()
             print(e)
-            print("Failed to load data into menus")
         finally:
             self.disconnect()
 
@@ -470,7 +443,7 @@ class Database:
 
 
 
-    def add_new_action_describtion(self, descriptions, lang = "en")-> int:
+    def add_new_action_describtion(self, descriptions: str, lang: str = "en")-> int:
         try:
             self.connect()
             with self.connection.cursor() as cursor:
@@ -492,27 +465,7 @@ class Database:
             self.disconnect()
 
   
-
-# #для упрощения заменить столбец на en
-#     def get_message(self, id, lang = "en"):
-#         with self.connection.cursor() as cursor:
-#             if(lang == "en"):
-#                 cursor.execute(f"""SELECT message FROM menus WHERE id='{id}';""")
-#             else:
-#                 cursor.execute(f"""SELECT message{"_" + lang} FROM menus WHERE id='{id}';""")
-#             message = cursor.fetchall()
-#             return str(list(message[0].values())[0])
-
-#     def get_button_name(self, id, lang = "en"):
-#         with self.connection.cursor() as cursor:
-#             if(lang == "en"):
-#                 cursor.execute(f"""SELECT button_name FROM menus WHERE id='{id}';""")
-#             else:
-#                 cursor.execute(f"""SELECT button_name{"_" + lang} FROM menus WHERE id='{id}';""")
-#             button_name = cursor.fetchall()
-#             return str(list(button_name[0].values())[0])
-
-    def update_message(self, id, msg, lang = "en"):
+    def update_message(self, id: int, msg: str, lang: str = "en")-> bool:
         try:
             if(lang == "en"):
                 self.connect()
@@ -536,7 +489,7 @@ class Database:
         finally:
             self.disconnect()  
 
-    def update_button_name(self, id, button_name, lang = "en"):
+    def update_button_name(self, id: int, button_name: str, lang: str = "en")-> bool:
         try:
             if(lang == "en"):
                 self.connect()
@@ -565,7 +518,7 @@ class Database:
 
     #users
 
-    def add_user(self, id: int, username: str, lang = 'en', is_admin = False)-> bool:
+    def add_user(self, id: int, username: str, lang = 'en', is_admin: bool = False)-> bool:
         try:
             self.connect()
             with self.connection.cursor() as cursor:
@@ -575,7 +528,6 @@ class Database:
                 self.connection.commit()
                 return True
         except Exception as e:
-            self.connection.rollback()
             print(e)
             return False
         finally:
@@ -592,7 +544,6 @@ class Database:
                 is_exists = cursor.fetchall()
                 return bool(len(is_exists))
         except Exception as e:
-            self.connection.rollback()
             print(e)
             return False
         finally:
@@ -614,7 +565,7 @@ class Database:
         finally: 
             self.disconnect()
 
-    def get_lang(self, id): 
+    def get_lang(self, id: int)-> str: 
         try: 
             self.connect() 
             with self.connection.cursor() as cursor: 
@@ -625,11 +576,26 @@ class Database:
                 return result[0] 
         except Exception as e: 
             print(e) 
-            return None 
+            return "en"
         finally: 
             self.disconnect()
 
-    def update_lang(self, id, lang = 'en'): 
+    def get_username(self, id: int)-> str: 
+        try: 
+            self.connect() 
+            with self.connection.cursor() as cursor: 
+                query = "SELECT username FROM users WHERE id = %s;" 
+                params = (id,) 
+                cursor.execute(query, params) 
+                result = cursor.fetchone()
+                return result[0] 
+        except Exception as e: 
+            print(e) 
+            return ""
+        finally: 
+            self.disconnect()
+
+    def update_lang(self, id: int, lang: str = 'en')-> bool: 
         try: 
             self.connect() 
             with self.connection.cursor() as cursor: 
@@ -637,39 +603,29 @@ class Database:
                 params = (lang, id) 
                 cursor.execute(query, params) 
                 self.connection.commit() 
+                return True
         except Exception as e: 
-            self.connection.rollback() 
             print(e) 
+            return False
         finally: 
             self.disconnect()
 
-    def del_user(self, id): 
+    def del_user(self, id: int)-> bool: 
         try: 
             self.connect() 
             with self.connection.cursor() as cursor: 
                 query = "DELETE FROM users WHERE id = %s;" 
                 params = (id,) 
                 cursor.execute(query, params) 
-                self.connection.commit() 
+                self.connection.commit()
+                return True 
         except Exception as e: 
-            self.connection.rollback() 
             print(e) 
+            return False
         finally: 
             self.disconnect()
 
-    def del_all_users(self): 
-        try: 
-            self.connect() 
-            with self.connection.cursor() as cursor: 
-                query = "DELETE FROM users WHERE is_admin = %s;" 
-                params = (False,) 
-                cursor.execute(query, params) 
-                self.connection.commit() 
-        except Exception as e: 
-            self.connection.rollback() 
-            print(e) 
-        finally: 
-            self.disconnect()
+
 
     def get_all_users_id(self)-> list[int]: 
         try: 
@@ -739,7 +695,7 @@ class Database:
 
 
     #telegram_questions
-    def add_new_question(self, user_id: int, question: str):
+    def add_new_question(self, user_id: int, question: str)-> bool:
         try: 
             question_datetime = datetime.datetime.now()
             self.connect() 
@@ -748,9 +704,10 @@ class Database:
                 params = (user_id, question, question_datetime) 
                 cursor.execute(query, params) 
                 self.connection.commit() 
+                return True
         except Exception as e: 
-            self.connection.rollback() 
             print(e) 
+            return False
         finally: 
             self.disconnect()
 
@@ -776,7 +733,7 @@ class Database:
         try: 
             self.connect() 
             with self.connection.cursor() as cursor:  
-                cursor.execute("""SELECT id, question FROM telegram_questions WHERE answer IS NULL ORDER BY question_datetime;""") 
+                cursor.execute("""SELECT id, question FROM telegram_questions WHERE answer IS NULL AND is_open = False ORDER BY question_datetime;""") 
                 questions = cursor.fetchall()
                 return questions
         except Exception as e: 
@@ -817,6 +774,23 @@ class Database:
         finally: 
             self.disconnect() 
 
+
+    def check_question_by_id(self, question_id: int)-> bool:
+        try: 
+            self.connect() 
+            with self.connection.cursor() as cursor:  
+                query = "SELECT is_open FROM telegram_questions WHERE id = %s;"
+                params = (question_id, ) 
+                cursor.execute(query, params)
+                is_open = cursor.fetchone()
+                return bool(is_open[0])
+        except Exception as e: 
+            print(e)
+            return True
+        finally: 
+            self.disconnect() 
+
+
     def get_answer_by_id(self, question_id: int)-> str:
         try: 
             self.connect() 
@@ -847,7 +821,22 @@ class Database:
             return None
         finally: 
             self.disconnect() 
- 
+
+
+    def update_question_by_id(self, elem: str, value: object, question_id: int)-> bool:
+        try: 
+            self.connect() 
+            with self.connection.cursor() as cursor:  
+                query = f"UPDATE telegram_questions SET {elem} = %s WHERE id = %s;"
+                params = (value, question_id) 
+                cursor.execute(query, params) 
+                self.connection.commit() 
+                return True
+        except Exception as e: 
+            print(e) 
+            return False
+        finally: 
+            self.disconnect()
 
  #forms
     def add_new_form(self, user_id: int, form_dict: dict)-> bool:
@@ -873,38 +862,14 @@ class Database:
         finally: 
             self.disconnect()
 
-    # def update_form_element(self, form_id: int, column: str, value: object)-> bool:
-    #     try: 
-    #         self.connect() 
-    #         with self.connection.cursor() as cursor:  
-    #             query = "UPDATE forms SET {column} = '{value}' WHERE form_id = {form_id};"
-    #             params = (elem, value, form_id) 
-    #             cursor.execute(query, params) 
-    #             self.connection.commit() 
-    #             return True
-    #     except Exception as e: 
-    #         print(e) 
-    #         return False
-    #     finally: 
-    #         self.disconnect()
-    #     with self.connection.cursor() as cursor:
-    #         cursor.execute(f"""UPDATE forms SET {column} = '{value}' WHERE form_id = {form_id};""")
-    #         self.connection.commit()  
 
-
-    def get_all_forms(self):
-        with self.connection.cursor() as cursor:
-            cursor.execute(f"""SELECT form_id FROM forms;""")             
-            forms = cursor.fetchall()
-            return list(map(lambda x: x['form_id'],forms))
-    # не забыть отсортировать по дате
         
 
     def get_new_forms(self)-> list[int]:
         try: 
             self.connect() 
             with self.connection.cursor() as cursor:  
-                cursor.execute("""SELECT form_id FROM forms WHERE is_reviewed = False ORDER BY apply_date;""") 
+                cursor.execute("""SELECT form_id FROM forms WHERE is_reviewed = False AND is_full = True AND is_open = False ORDER BY apply_date;""") 
                 forms = cursor.fetchall()
                 return list(map(lambda form: form[0], forms))
         except Exception as e: 
@@ -914,7 +879,7 @@ class Database:
             self.disconnect()
 
 
-    def get_all_elem_by_form_id(self, form_id)-> tuple:
+    def get_all_elem_by_form_id(self, form_id: str)-> tuple:
         try: 
             self.connect() 
             with self.connection.cursor() as cursor:  
@@ -930,7 +895,7 @@ class Database:
             self.disconnect()
 
 
-    def get_elem_by_id(self, elem, form_id):
+    def get_elem_by_id(self, elem, form_id: int)-> list:
         try: 
             self.connect() 
             with self.connection.cursor() as cursor:  
@@ -947,15 +912,15 @@ class Database:
 
 
 
-    def get_forms_by_user_id(self, user_id):   
+    def get_forms_by_user_id(self, user_id:int)-> list:   
         try: 
             self.connect() 
             with self.connection.cursor() as cursor:  
-                query = "SELECT form_id FROM forms WHERE user_id = %s ORDER BY apply_date;"
+                query = "SELECT form_id FROM forms WHERE user_id = %s ORDER BY apply_date DESC;"
                 params = (user_id, ) 
                 cursor.execute(query, params) 
                 forms = cursor.fetchall()
-                return list(forms[0])
+                return list(map(lambda form: form[0], forms))
         except Exception as e: 
             print(e) 
             return list()
@@ -965,10 +930,6 @@ class Database:
         
 
 
-    def add_new_form_by_id(self, user_id):
-        with self.connection.cursor() as cursor:
-            cursor.execute(f"""INSERT INTO forms(user_id) VALUES({user_id});""")             
-            self.connection.commit()
 
     def update_elem_by_id(self, elem: str, value: object, form_id: int)-> bool:
         try: 
@@ -985,32 +946,21 @@ class Database:
         finally: 
             self.disconnect()
  
-    # def set_comment_admin_NULL(self, form_id):
-    #     try: 
-    #         self.connect() 
-    #         with self.connection.cursor() as cursor:  
-    #             query = "UPDATE forms SET admin_comment = NULL ;"
-    #             params = (elem, value, form_id) 
-    #             cursor.execute(query, params) 
-    #             self.connection.commit() 
-    #             return True
-    #     except Exception as e: 
-    #         print(e) 
-    #         return False
-    #     finally: 
-    #         self.disconnect()
-    #     with self.connection.cursor() as cursor:
-    #         cursor.execute(f"""UPDATE forms SET admin_comment = NULL;""")             
-    #         self.connection.commit()   
-#переименовать в update
-
-    # def set_form_status_reviewed(self, form_id):
-    #     with self.connection.cursor() as cursor:
-    #         cursor.execute(f"""UPDATE forms SET is_reviewed = True WHERE form_id = {form_id};""")             
-    #         self.connection.commit()        
 
     
-
+    def get_count_forms_by_month(self)-> int:   
+        try: 
+            self.connect() 
+            with self.connection.cursor() as cursor:  
+                query = "SELECT COUNT(*) FROM forms WHERE MONTH(apply_date) = MONTH(CURRENT_DATE()) AND YEAR(apply_date) = YEAR(CURRENT_DATE());"
+                cursor.execute(query) 
+                count = cursor.fetchone()
+                return int(count[0])
+        except Exception as e: 
+            print(e) 
+            return 0
+        finally: 
+            self.disconnect()
     
 
 
@@ -1026,13 +976,6 @@ class Database:
 
 
 
-
-
-# from config import host, user, password, database
-# db = Database(host, user, password, database)
-
-# a = db.get_text()
-# print(a)
 
     
 
