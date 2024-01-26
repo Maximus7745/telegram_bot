@@ -20,7 +20,7 @@ def build_tfidf_matrix(texts):
     tfidf_matrix = tfidf_vectorizer.fit_transform(texts)
     return tfidf_matrix.toarray()  
 
-# Поиск ближайшего ответа
+
 def find_closest_answer(question):
     processed_question = preprocess_text(question)
     question_dict_keys = list(question_dict.keys())  
